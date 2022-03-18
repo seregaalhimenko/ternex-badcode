@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- Begin Page Content -->
+<div class="container" style="min-height: calc(100vh - 170px);">
+
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Оповещение</h1>
+  </div>
+
+  <div class="row row-flex">
+
+    <div class="offset-sm-2 col-sm-8 card mb-3 py-1 text-center border-bottom-primary">
+      <div class="card-body">
+        <h3 class="h5 card-title mb-0 text-gray-800">{{notification.title}}</h3>
+      </div>
+    </div>
+
+    <div class="offset-md-2 col-md-8 col-sm-12 card p-2 border-bottom-primary mb-5">
+      <div class="card-body text-gray-900 px-5">
+        {{notification.message}}
+        <div class="notification-time mt-5 text-right">
+          <small>
+            Время: {{notification.time}}
+            <br>
+            Дата отправки: {{notification.date}}
+          </small>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- /.container-fluid -->
+
+</div>
+<!-- End of Main Content -->
+
+{% endblock %}

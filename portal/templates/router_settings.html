@@ -1,0 +1,771 @@
+{% extends 'base.html' %} {% block content %}
+<!-- Charts JavaScript -->
+<script src="/static/portal/vendor/chart.js/Chart.min.js"></script>
+<script src="/static/portal/js/user_count.js"></script>
+<div class="container-fluid" style="min-height: calc(100vh - 170px);">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Настройки роутера {{router.name}}</h1>
+  </div>
+
+  <div class="row row-flex">
+    <div class="col-lg-6 router-info">
+      <div class="card shadow mb-4">
+        <div class="card-header">
+          <h5 class="text-center text-gray-800">
+            Информация о роутере
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-12 d-flex justify-content-center align-items-center text-center">
+              <p class="mb-1"><b>IPv6:</b> {{router.ipv6}}</p>
+            </div>
+            <div class="col-sm-6">
+              <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                  let memory = "{{router.memory|safe}}";
+                  memory = Math.trunc(memory / 1000, 10);
+                  let router_memory_span = document.querySelector("span.router-memory");
+                  router_memory_span.innerHTML = memory.toString();
+                });
+              </script>
+              <p class="mb-1"><b>Название:</b> {{router.name}}</p>
+              <p class="mb-1"><b>Онлайн:</b> {{ online_days }} дней</p>
+              <p class="mb-1"><b>Активность:</b> {{last_statistic.active_users }}</p>
+              <p class="mb-1"><b>Бренд:</b> {{router.brand}}</p>
+              <p class="mb-1"><b>Модель:</b> {{router.model}}</p>
+              <p class="mb-1"><b>Память:</b> <span class="router-memory"></span> Mb</p>
+              <p class="mb-1"><b>ЦПУ:</b> {{router.cpu}}</p>
+            </div>
+            <div
+              class="col-sm-6 d-flex justify-content-center align-items-center"
+              style="background-image: url('../../../static/portal/img/router/router_on.png'); min-height: 150px; background-position: center; background-size: contain; background-repeat: no-repeat;"
+            ></div>
+            <div class="offset-sm-1 col-sm-10 d-flex justify-content-center align-items-center">
+              <form
+                action="/router/{{id_router}}/settings/change-wifi-channel"
+                method="POST"
+                class="d-flex w-100 justify-content-center align-items-center flex-column my-3"
+              >
+                {% csrf_token %}
+                <label for="routerChannel">Выберите канал:</label>
+                <select
+                  name="channel"
+                  value="{{last_statistic.channel}}"
+                  class="form-control mb-3 p-2"
+                  style="width:60%"
+                  id="routerChannel"
+                >
+                  <option class="channel-select" value="1">1</option>
+                  <option class="channel-select" value="2">2</option>
+                  <option class="channel-select" value="3">3</option>
+                  <option class="channel-select" value="4">4</option>
+                  <option class="channel-select" value="5">5</option>
+                  <option class="channel-select" value="6">6</option>
+                  <option class="channel-select" value="7">7</option>
+                  <option class="channel-select" value="8">8</option>
+                  <option class="channel-select" value="9">9</option>
+                  <option class="channel-select" value="10">10</option>
+                  <option class="channel-select" value="11">11</option>
+                  <option class="channel-select" value="12">12</option>
+                  <option class="channel-select" value="13">13</option>
+                  <option class="channel-select" value="auto">auto</option>
+                </select>
+                <button class="btn btn-primary" type="submit" style="width: 70%;">
+                  Отправить
+                </button>
+                <script>
+                  document.getElementsByClassName("channel-select")[Number("{{last_statistic.channel | safe}}") - 1].selected =
+                    "selected";
+                </script>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 router-stats">
+      <div class="card shadow mb-4">
+        <div class="card-header">
+          <h5 class="text-center text-gray-800">
+            Использование памяти
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="router_{{router.id}}_memory_chart"></canvas>
+          <script>
+            var ctx_memory = $("#router_{{router.id}}_memory_chart");
+            let memory_used = parseInt("{{ last_statistic.memory_used | safe }}");
+            memory_used = Math.trunc(memory_used / 1000, 10);
+            // memory_used = `${memory_used} Mb`;
+            let memory_free = parseInt("{{ last_statistic.memory_free | safe }}");
+            memory_free = Math.trunc(memory_free / 1000, 10);
+            // memory_free = `${memory_free} Mb`;
+            var routerMemoryChart = new Chart(ctx_memory, {
+              type: "pie",
+              data: {
+                labels: ["Памяти использовано", "Памяти свободно"],
+                datasets: [
+                  {
+                    data: [memory_used, memory_free],
+                    backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc"],
+                    hoverBackgroundColor: ["#2e59d9", "#17a673", "#2c9faf"],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                  },
+                ],
+              },
+              tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: "#dddfeb",
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+              },
+              legend: {
+                display: false,
+              },
+              cutoutPercentage: 80,
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 router-stats">
+      <div class="card shadow mb-4">
+        <div class="card-header">
+          <h5 class="text-center text-gray-800">
+            Статистика пользователей
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="router_{{router.id}}_users_chart"></canvas>
+          <script>
+              var ctx_users = $("#router_{{router.id}}_users_chart");
+              let statistics_user_time = {{ statistics.time | safe }};
+              statistics_user_time = statistics_user_time.slice(-288);
+              let statistics_users = {{ statistics.active_users | safe}};
+              statistics_users = statistics_users.slice(-288);
+              var routerUserCount = new Chart(ctx_users, {
+                type: "line",
+                data: {
+                  labels: statistics_user_time,
+                  datasets: [
+                    {
+                      label: "Пользователей:",
+                      lineTension: 0.3,
+                      backgroundColor: "rgba(78, 115, 223, 0.05)",
+                      borderColor: "rgba(78, 115, 223, 1)",
+                      pointRadius: 3,
+                      pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                      pointBorderColor: "rgba(78, 115, 223, 1)",
+                      pointHoverRadius: 3,
+                      pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                      pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                      pointHitRadius: 10,
+                      pointBorderWidth: 2,
+                      data: statistics_users,
+                            }
+                  ]
+                },
+
+            options: {
+              maintainAspectRatio: false,
+                layout: {
+                padding: {
+                  left: 10,
+                    right: 25,
+                      top: 25,
+                        bottom: 0
+                }
+              },
+              scales: {
+                xAxes: [
+                  {
+                    time: {
+                      unit: "date"
+                    },
+                    gridLines: {
+                      display: false,
+                      drawBorder: false
+                    },
+                    ticks: {
+                      maxTicksLimit: 7,
+                      beginAtZero: true,
+                    }
+                  }
+                ],
+                  yAxes: [
+                    {
+                      ticks: {
+                        maxTicksLimit: 5,
+                        padding: 10,
+                        stepSize: 1,
+                        beginAtZero: true,
+                        callback: function (value, index, values) {
+                          return number_format(value);
+                        }
+                      },
+                      gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                      }
+                    }
+                  ]
+              },
+              legend: {
+                display: false
+              },
+              tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                  bodyFontColor: "#858796",
+                    titleMarginBottom: 10,
+                      titleFontColor: "#6e707e",
+                        titleFontSize: 14,
+                          borderColor: "#dddfeb",
+                            borderWidth: 1,
+                              xPadding: 15,
+                                yPadding: 15,
+                                  displayColors: false,
+                                    intersect: false,
+                                      mode: "index",
+                                        caretPadding: 10,
+                                          callbacks: {
+                  label: function(tooltipItem, chart) {
+                    var datasetLabel =
+                      chart.datasets[tooltipItem.datasetIndex].label || "";
+                    return datasetLabel + " " + number_format(tooltipItem.yLabel);
+                  }
+                }
+              }
+            }
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 router-stats">
+      <div class="card shadow mb-4">
+        <div class="card-header">
+          <h5 class="text-center text-gray-800">
+            Статистика загрузки
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="router_{{router.id}}_channel_chart"></canvas>
+          <script>
+              var ctx_stats = $("#router_{{router.id}}_channel_chart");
+              let statistics_download_time = {{ statistics.time | safe }};
+              statistics_download_time = statistics_download_time.slice(-20);
+              let statistics_download = {{ statistics.download_speed | safe}};
+              statistics_download = statistics_download.slice(-20);
+              ready_stat_download = [];
+              statistics_download.forEach(stat => {
+                stat = stat.split(" ")[0];
+                stat = parseFloat(stat);
+                ready_stat_download.push(stat);
+              });
+              let statistics_upload = {{ statistics.upload_speed | safe}};
+              statistics_upload = statistics_upload.slice(-20);
+              ready_stat_upload = [];
+              statistics_upload.forEach(stat => {
+                stat = stat.split(" ")[0];
+                stat = parseFloat(stat);
+                ready_stat_upload.push(stat);
+              });
+              var routerUserCount = new Chart(ctx_stats, {
+                type: "line",
+                data: {
+                  labels: statistics_download_time,
+                  datasets: [
+                    {
+                      label: "Скачивание:",
+                      lineTension: 0.3,
+                      backgroundColor: "rgba(78, 115, 223, 0.05)",
+                      borderColor: "rgba(78, 115, 223, 1)",
+                      pointRadius: 3,
+                      pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                      pointBorderColor: "rgba(78, 115, 223, 1)",
+                      pointHoverRadius: 3,
+                      pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                      pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                      pointHitRadius: 10,
+                      pointBorderWidth: 2,
+                      data: ready_stat_download,
+                    },
+                    {
+                      label: "Загрузка:",
+                      lineTension: 0.3,
+                      backgroundColor: "rgba(58, 75, 163, 0.05)",
+                      borderColor: "rgba(58, 75, 163, 1)",
+                      pointRadius: 3,
+                      pointBackgroundColor: "rgba(58, 75, 163, 1)",
+                      pointBorderColor: "rgba(58, 75, 163, 1)",
+                      pointHoverRadius: 3,
+                      pointHoverBackgroundColor: "rgba(58, 75, 163, 1)",
+                      pointHoverBorderColor: "rgba(58, 75, 163, 1)",
+                      pointHitRadius: 10,
+                      pointBorderWidth: 2,
+                      data: ready_stat_upload,
+                    },
+
+                  ]
+                },
+
+            options: {
+              maintainAspectRatio: false,
+                layout: {
+                padding: {
+                  left: 10,
+                    right: 25,
+                      top: 25,
+                        bottom: 0
+                }
+              },
+              scales: {
+                xAxes: [
+                  {
+                    time: {
+                      unit: "date"
+                    },
+                    gridLines: {
+                      display: false,
+                      drawBorder: false
+                    },
+                    ticks: {
+                      maxTicksLimit: 7,
+                      beginAtZero: true,
+                    }
+                  }
+                ],
+                  yAxes: [
+                    {
+                      ticks: {
+                        maxTicksLimit: 5,
+                        padding: 10,
+                        stepSize: 1,
+                        beginAtZero: true,
+                        callback: function (value, index, values) {
+                          return number_format(value);
+                        }
+                      },
+                      gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                      },
+                    }
+                  ]
+              },
+              legend: {
+                display: false
+              },
+              tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                  bodyFontColor: "#858796",
+                    titleMarginBottom: 10,
+                      titleFontColor: "#6e707e",
+                        titleFontSize: 14,
+                          borderColor: "#dddfeb",
+                            borderWidth: 1,
+                              xPadding: 15,
+                                yPadding: 15,
+                                  displayColors: false,
+                                    intersect: false,
+                                      mode: "index",
+                                        caretPadding: 10,
+                                          callbacks: {
+                  label: function(tooltipItem, chart) {
+                    var datasetLabel =
+                      chart.datasets[tooltipItem.datasetIndex].label || "";
+                    return datasetLabel + " " + number_format(tooltipItem.yLabel) + " kbit/s";
+                  }
+                }
+              }
+            }
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 create-hotspot">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h5 class=" text-center text-gray-800">
+            Вы можете создать WiFi сеть для Вашего роутера
+          </h5>
+        </div>
+        <div class="card-body">
+          <form
+            class="user p-3"
+            id="change_router_form"
+            method="POST"
+            action="/router/{{id_router}}/settings/add-wifi-network"
+          >
+            {% csrf_token %}
+            <div class="form-group row">
+              <div class="col-sm-12">
+                <label class="text-gray-700 mb-2" for="wifi_name">Название сети:</label>
+                <input
+                  class="form-control form-control-user p-3 pl-4 mb-3"
+                  type="text"
+                  id="wifi_name"
+                  placeholder="Название сети"
+                  name="wifi_name"
+                  required
+                />
+              </div>
+              <div class="col-sm-12">
+                <label class="text-gray-700 mb-2" for="wifi_encryption">Шифрование:</label>
+                <select class="custom-select" id="wifi_encryption" name="encryption">
+                  <option value="0" selected>Без шифрования</option>
+                  <option value="1">WPA2-PSK</option>
+                </select>
+              </div>
+              <div class="col-sm-12 wifi-password-inputs mt-4" style="display: none;">
+                <input
+                  class="form-control form-control-user p-3 pl-4 mb-3"
+                  type="password"
+                  id="wifi_pass1"
+                  placeholder="Пароль"
+                  onkeyup="password_validation();"
+                  name="password"
+                />
+                <input
+                  class="form-control form-control-user p-3 pl-4 mb-3"
+                  type="password"
+                  id="wifi_pass2"
+                  placeholder="Пароль еще раз"
+                  onkeyup="password_validation();"
+                  name="password_check"
+                />
+                <p id="wifi_error" class="text-gray-700 mb-2 mt-2"></p>
+                {{myerr}}
+              </div>
+            </div>
+            <div class="offset-sm-2 col-sm-8 d-flex justify-content-center align-items-center">
+              <input type="hidden" name="router_id" value="{{router.id}}" />
+              <input
+                class="btn btn-primary btn-user btn-block p-2 mb-4"
+                id="wifi_send"
+                style="width: 70%;"
+                type="submit"
+                value="Отправить"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <script>
+        $(".close-settings").on("click", function() {
+          $("#change_router_form").hide();
+          $(".wifi-password-inputs").hide();
+          $("#wifi_pass1").removeAttr("required");
+          $("#wifi_pass2").removeAttr("required");
+          $("#wifi_encryption").val("0");
+        });
+
+        $("#wifi_encryption").on("change", function() {
+          if ($(this).val() == 1) {
+            $(".wifi-password-inputs").show();
+            $("#wifi_pass1").attr("required", "true");
+            $("#wifi_pass2").attr("required", "true");
+          } else {
+            $(".wifi-password-inputs").hide();
+            $("#wifi_pass1").removeAttr("required");
+            $("#wifi_pass2").removeAttr("required");
+          }
+        });
+
+        var password_validation = function() {
+          if ($("#wifi_pass1").val() !== $("#wifi_pass2").val()) {
+            $("#wifi_send").attr("disabled", "true");
+            $("#wifi_pass1").css("border", "3px solid rgba(245, 8, 19, 0.47)");
+            $("#wifi_pass2").css("border", "3px solid rgba(245, 8, 19, 0.47)");
+            $("#wifi_error").text("Пароли не совпадают!");
+          } else {
+            $("#wifi_send").removeAttr("disabled");
+            $("#wifi_pass1").css("border", "3px solid rgba(0, 128, 0, 0.47)");
+            $("#wifi_pass2").css("border", "3px solid rgba(0, 128, 0, 0.47)");
+            $("#wifi_error").text("");
+          }
+        };
+      </script>
+    </div>
+    <div class="col-lg-6 hotspot-list">
+      <!-- Basic Card Example -->
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h5 class="text-center text-gray-800">
+            Список активных WiFi сетей
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="hotspotsAccordion">
+            {% for hotspot in hotspots %}
+            <div class="card shadow mb-2">
+              <a
+                href="#collapseHotspotCard_{{hotspot.id}}"
+                class="d-block card-header bg-info py-3"
+                data-toggle="collapse"
+                role="button"
+                aria-expanded="true"
+                aria-controls="collapseHotspotCard_{{hotspot.id}}"
+              >
+                <div class="hotspot-item d-flex align-items-center">
+                  <button
+                    class="btn collapsed hotspot-header"
+                    type="button"
+                    data-toggle="collapse"
+                    data-target="#collapseHotspotCard_{{hotspot.id}}"
+                    aria-expanded="false"
+                    aria-controls="collapseHotspotCard_{{hotspot.id}}"
+                  >
+                    <h5 class="text-gray-100 m-0">
+                      {{hotspot.ssid}}
+                    </h5>
+                  </button>
+                  {% if hotspot.encryption != "none" %}
+                  <i
+                    class="fas fa-lock ml-3"
+                    style="color: #f8f9fc;"
+                    data-toggle="tooltip"
+                    data-placement="bottom"
+                    title="Сеть находится под защитой."
+                  ></i>
+                  {% endif %}
+                </div>
+              </a>
+              <div class="collapse show" id="collapseHotspotCard_{{hotspot.id}}" data-parent="#hotspotsAccordion">
+                <div class="card-body">
+                  <div class="hotspot-body-info mb-3">
+                    Описание точки...
+                  </div>
+                  {% if hotspot.ssid != "AltaiMesh" %}
+                  <div class="hotspot-body-footer d-flex justify-content-end align-items-center">
+                    <form action="/router/{{id_router}}/settings/edit-wifi-network" method="POST" class="mr-2">
+                      {% csrf_token %}
+                      <input type="hidden" value="{{hotspot.ssid}}" name="edit" />
+                      <button
+                        id="hotspot_{{hotspot.id}}_edit"
+                        class="btn btn-warning"
+                        data-toggle="modal"
+                        data-target="#editHotspot{{hotspot.ssid}}Modal"
+                        type="button"
+                      >
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </form>
+
+                    <form action="/router/{{id_router}}/settings/delete-wifi-network" method="POST">
+                      {% csrf_token %}
+                      <input type="hidden" value="{{hotspot.ssid}}" name="ssid" />
+                      <button
+                        id="hotspot_{{hotspot.id}}_delete"
+                        class="btn btn-danger"
+                        data-toggle="tooltip"
+                        data-placement="bottom"
+                        title="Удалить сеть"
+                        type="submit"
+                      >
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </form>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <script>
+              document.addEventListener("DOMContentLoaded", function() {
+                let id = "{{hotspot.id}}";
+                $(`#collapseHotspotCard_${id}`).collapse("hide");
+              });
+            </script>
+
+            <!-- Edit Hotspot Modal-->
+            <div
+              class="modal fade"
+              id="editHotspot{{hotspot.ssid}}Modal"
+              tabindex="-1"
+              role="dialog"
+              aria-hidden="true"
+            >
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">
+                      Редактировать WiFi сеть
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <form
+                      class="user p-3"
+                      id="edit_hotspot_{{hotspot.ssid}}_form"
+                      method="POST"
+                      action="/router/{{id_router}}/settings/edit-wifi-network"
+                    >
+                      {% csrf_token %}
+                      <div class="form-group row">
+                        <div class="col-sm-12">
+                          <label class="text-gray-700 mb-2" for="edit_wifi_name">Название сети:</label>
+                          <input
+                            class="form-control form-control-user p-3 pl-4 mb-3"
+                            type="text"
+                            id="edit_wifi_{{hotspot.ssid}}_name"
+                            placeholder="Название сети"
+                            name="wifi_name"
+                            value="{{hotspot.ssid}}"
+                            required
+                          />
+                        </div>
+                        <div class="col-sm-12">
+                          <label class="text-gray-700 mb-2" for="edit_wifi_{{hotspot.ssid}}_encryption"
+                            >Шифрование:</label
+                          >
+                          <select class="custom-select" id="edit_wifi_{{hotspot.ssid}}_encryption" name="encryption">
+                            <option value="0" selected>Без шифрования</option>
+                            <option value="1">WPA2-PSK</option>
+                          </select>
+                        </div>
+                        <div class="col-sm-12 wifi-password-inputs mt-4" style="display: none;">
+                          <input
+                            class="form-control form-control-user p-3 pl-4 mb-3"
+                            type="password"
+                            id="edit_wifi_{{hotspot.ssid}}_pass1"
+                            placeholder="Пароль"
+                            onkeyup="password_validation();"
+                            name="password"
+                          />
+                          <input
+                            class="form-control form-control-user p-3 pl-4 mb-3"
+                            type="password"
+                            id="edit_wifi_{{hotspot.ssid}}_pass2"
+                            placeholder="Пароль еще раз"
+                            onkeyup="password_validation();"
+                            name="password_check"
+                          />
+                          <p id="edit_wifi_{{hotspot.ssid}}_error" class="text-gray-700 mb-2 mt-2"></p>
+                          {{myerr}}
+                        </div>
+                      </div>
+                      <div class="offset-sm-2 col-sm-8 d-flex justify-content-center align-items-center">
+                        <input type="hidden" name="router_id" value="{{router.id}}" />
+                        <input type="hidden" name="ssid" value="{{hotspot.ssid}}" />
+                        <input
+                          class="btn btn-primary btn-user btn-block p-2 mb-4"
+                          id="edit_wifi_{{hotspot.ssid}}_send"
+                          style="width: 70%;"
+                          type="submit"
+                          value="Отправить"
+                        />
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {% endfor %}
+            <style>
+              .card .card-header[data-toggle="collapse"]::after {
+                top: 10px !important;
+                padding-right: 1.125rem !important;
+              }
+
+              .btn.hotspot-header {
+                box-shadow: none;
+                -webkit-box-shadow: none;
+              }
+            </style>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if apps %}
+    <div class="col-lg-6 router-apps">
+      <div class="card shadow mb-4">
+        <div class="card-header">
+          <h5 class="text-center text-gray-800">
+            Установленные приложения
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <ul class="apps-list">
+            <!-- for app in apps -->
+            {% for app in apps%} {% if app.installed %}
+
+            <li class="router-app d-flex flex-row justify-content-between align-items-center mb-2">
+              <button class="btn app-btn" data-toggle="modal" data-target="#AppIDModal"><i class="fas fa-cubes mr-1"></i>{{app.name_app}}</button>
+              <style>
+              .app-btn {
+                  font-size: 1.1rem;
+                  font-weight: 800;
+                  color: #45464f;
+              }
+              .app-btn i {
+                  font-size: 1.4rem;
+              }
+              </style>
+              <form action="/app/delete-application/" method="POST">
+                {% csrf_token %}
+                <input type="hidden" value="{{app.id_app}}" name="id_app" />
+                <input type="hidden" value="{{router.id}}" name="router_id" />
+                <button
+                  class="btn"
+                  data-toggle="tooltip"
+                  data-placement="bottom"
+                  title="Удалить приложение"
+                  type="submit"
+                >
+                  <i class="fas fa-times text-danger"></i>
+                </button>
+              </form>
+              
+            </li>
+
+            <!-- App Modal-->
+            <div class="modal fade" id="AppIDModal" tabindex="-1" role="dialog" aria-hidden="true">
+              <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">
+                      {{app.name_app}}
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close"></button>
+                    <span aria-hidden="true">×</span>
+                  </div>
+                  <div class="modal-body">
+                    <iframe src="https://{{router.url}}:8888/{{app.name_app}}/" style="width: 100%; min-height: 450px;" frameborder="0"></iframe>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {%endif%} {% endfor %}
+            <!-- endfor -->
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

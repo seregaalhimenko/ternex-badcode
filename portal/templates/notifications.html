@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- Begin Page Content -->
+<div class="container" style="min-height: calc(100vh - 170px);">
+
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Ваши оповещения</h1>
+    {% if notifications %}
+    <form action="/cleanNotifications/" method="POST">
+    <!-- clean notifications -->
+      {% csrf_token %}
+        <button
+          class="btn btn-danger mt-2 mt-md-0"
+          data-toggle="tooltip"
+          data-placement="bottom"
+          title="Удалить все текущие уведомления"
+          type="submit"
+        >
+          <i class="fas fa-trash mr-2"></i>Очистить
+          </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="row row-flex">
+
+    {% if not notifications %}
+    <div class="col-sm-12 empty-notifications">
+      <h3 class="h3 text-primary mb-4">
+        Оповещений не найдено!
+      </h3>
+      <img class="empty-notifications-img" src="../../static/portal/img/empty_notifications.svg" alt="Нет новых оповещений!">
+    </div>
+    {% endif %}
+
+    {% for notification in notifications %}
+    {% if notification.new %}
+
+      <div class="offset-sm-2 col-sm-8 card mb-3 border-left-warning">
+      <a href="/notification/{{notification.id}}/" class="not-underlined">
+        <div class="card-body d-flex justify-content-between">
+          <h3 class="h4 card-title mb-0 text-primary">{{notification.title}}</h3>
+          <form action="/delete_notification/" method="POST">
+            {% csrf_token %}
+            <input type="hidden" value="{{notification.id}}" name="id_notification" />
+            <button
+                id="notification_{{notification.id}}_delete"
+                class="btn btn-circle text-danger"
+                data-toggle="tooltip"
+                data-placement="right"
+                title="Удалить оповещение"
+                type="submit"
+            >
+            <i class="fas fa-times"></i>
+            </button>
+        </form>
+        </div>
+        <div class="card-footer d-flex justify-content-end text-gray-800" style="background-color: transparent;">
+            <small class="mr-2 text-danger font-weight-bold">Новое уведомление!</small>
+            <small>{{notification.date}}</small>
+        </div>
+      </a>
+    </div>
+      {% else %}
+      <div class="offset-sm-2 col-sm-8 card mb-3">
+        <a href="/notification/{{notification.id}}/" class="not-underlined">
+          <div class="card-body d-flex justify-content-between">
+            <h3 class="h4 card-title mb-0 text-primary">{{notification.title}}</h3>
+            <form action="/delete_notification/" method="POST">
+              {% csrf_token %}
+              <input type="hidden" value="{{notification.id}}" name="id_notification" />
+              <button
+                  id="notification_{{notification.id}}_delete"
+                  class="btn btn-circle text-danger"
+                  data-toggle="tooltip"
+                  data-placement="right"
+                  title="Удалить оповещение"
+                  type="submit"
+              >
+              <i class="fas fa-times"></i>
+              </button>
+          </form>
+          </div>
+          <div class="card-footer d-flex justify-content-end text-gray-800" style="background-color: transparent;">
+              <small>{{notification.date}}</small>
+          </div>
+        </a>
+      </div>
+      {% endif %}
+      {% endfor %}
+
+      <style>
+        .not-underlined:hover{
+          text-decoration: none;
+        }
+      </style>
+
+    </div>
+  </div>
+  <!-- /.container-fluid -->
+
+</div>
+<!-- End of Main Content -->
+
+{% endblock %}

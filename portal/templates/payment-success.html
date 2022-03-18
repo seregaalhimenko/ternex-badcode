@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/static/favicon.png" />
+    <title>Ternex | Успех</title>
+    <link rel="stylesheet" href="/static/portal/css/bootstrap-reboot.min.css" />
+    <link href="/static/portal/css/payment.css" rel="stylesheet" />
+
+</head>
+<body class="payment-body">
+    <div class="payment-window payment-window--success">
+        <svg width="120px" height="120px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            viewBox="0 0 468.293 468.293" style="enable-background:new 0 0 468.293 468.293;" xml:space="preserve">
+        <circle style="fill:#44C4A1;" cx="234.146" cy="234.146" r="234.146"/>
+        <polygon style="fill:#EBF0F3;" points="357.52,110.145 191.995,275.67 110.773,194.451 69.534,235.684 191.995,358.148 
+            398.759,151.378 "/>
+        </svg>
+        <h1 class="payment-header">Успешно!</h1>
+        <p class="payment-description">Ваша оплата прошла успешно, сейчас Вы будете перенаправлены на портал.</p>
+        <small class="payment-small">В случае, если Вы не были перенаправлены, перейдите по <a href="https://ternex.ru/portal/">ссылке</a>.</small>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                window.location.href = "/portal/";
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

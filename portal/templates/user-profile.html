@@ -1,0 +1,220 @@
+{% extends 'base.html' %} {% block content %}
+
+<!-- Begin Page Content -->
+<div class="container-fluid" style="min-height: calc(100vh - 170px);">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Профиль</h1>
+  </div>
+
+  <div class="row row-flex">
+    <div class="col-lg-4 col-sm-12 p-2 p-md-5 d-flex justify-content-center align-items-center text-center">
+      <div class="card shadow image-uploader mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            Изменить фото профиля
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-12 mb-3">
+              <img
+                src="{{ user.photo }}"
+                alt="User's avatar"
+                class="img-fluid"
+                style="max-height: 50vh; border-radius: 15px;"
+              />
+            </div>
+            <hr />
+            <div class="offset-sm-2 col-sm-8">
+              <form class="user" action="/change-user-image/" enctype="multipart/form-data" method="post">
+                {% csrf_token %}
+                <div class="form-group row">
+                  <div class="col-sm-12 custom-file">
+                    {{formImg.image}}
+                    <label class="custom-file-label text-left" for="user_custom_photo">Выбрать фото</label>
+
+                    <script>
+                      let file_input = document.querySelector(".custom-file-input");
+                      file_input.addEventListener("change", () => {
+                        let filename = file_input.value;
+                        filename = filename.replace("C:\\fakepath\\", "");
+                        let file_label = document.querySelector(".custom-file-label");
+                        file_label.innerHTML = filename;
+                      });
+                    </script>
+                  </div>
+                  <div class="col-sm-12 custom-file-submit mt-4">
+                    <input
+                      type="submit"
+                      name="change_photo_button"
+                      value="Отправить"
+                      class="btn btn-primary btn-user btn-block"
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8 col-sm-12 p-2">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Изменить данные</h6>
+        </div>
+        <div class="card-body">
+          <form class="user" method="POST" action="/change-user-data/">
+            {% csrf_token %}
+            <div class="form-group row">
+              <div class="col-sm-6 mb-3 mb-sm-0">
+                {{form.first_name}}
+              </div>
+              <div class="col-sm-6">
+                {{form.last_name}}
+              </div>
+            </div>
+            <div class="form-group row">
+              <div class="col-sm-7 mb-3">
+                {{form.email}}
+              </div>
+              <div class="col-sm-5">
+                {{form.phone}}
+              </div>
+              <div class="col-sm-12 form-group text-center mt-3 mt-sm-0">
+                <div class="form-check form-check-inline btn-group-toggle">
+                  {{form.sex}}
+                </div>
+              </div>
+              <div class="offset-sm-4 col-sm-4 mb-2">
+                <input
+                  type="submit"
+                  name="save_profile_button"
+                  value="Сохранить"
+                  class="btn btn-primary btn-user btn-block"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="send-mailing-togglers-cell my-3 py-3 px-4 shadow">
+        <label class="send-mailing-togglers h5 text-gray-800"
+          >Хотите получать уведомления на почту? {% if user.mailing %}
+          <div class="send-mailing-button-activate-toggler">
+            <form method="POST" action="/change_mailing_status/">
+              {% csrf_token %}
+              <input type="hidden" value="False" name="status" />
+              <button
+                class="btn p-0 text-success"
+                style="font-size: 2rem; line-height: 2rem;"
+                data-toggle="tooltip"
+                data-placement="bottom"
+                title="Отключить"
+                type="submit"
+              >
+                <i class="fas fa-toggle-on"></i>
+              </button>
+            </form>
+          </div>
+
+          {% else %}
+
+          <div class="send-mailing-button-activate-toggler">
+            <form method="POST" action="/change_mailing_status/">
+              {% csrf_token %}
+              <input type="hidden" value="True" name="status" />
+              <button
+                class="btn p-0 text-black"
+                style="font-size: 2rem; line-height: 2rem;"
+                data-toggle="tooltip"
+                data-placement="bottom"
+                title="Включить"
+                type="submit"
+              >
+                <i class="fas fa-toggle-off"></i>
+              </button>
+            </form>
+          </div>
+
+          {% endif %}
+        </label>
+      </div>
+
+      <div class="send-sending_data-togglers-cell my-3 py-3 px-4 shadow">
+        <label class="send-sending_data-togglers h5 text-gray-800"
+          >Роутеры должен отдавать данные? {% if user.sending_data %}
+          <div class="send-sending_data-button-activate-toggler">
+            <form method="POST" action="/change_sending_data_status/">
+              {% csrf_token %}
+              <input type="hidden" value="False" name="status" />
+              <button
+                class="btn p-0 text-success"
+                style="font-size: 2rem; line-height: 2rem;"
+                data-toggle="tooltip"
+                data-placement="bottom"
+                title="Отключить"
+                type="submit"
+              >
+                <i class="fas fa-toggle-on"></i>
+              </button>
+            </form>
+          </div>
+
+          {% else %}
+
+          <div class="send-sending_data-button-activate-toggler">
+            <form method="POST" action="/change_sending_data_status/">
+              {% csrf_token %}
+              <input type="hidden" value="True" name="status" />
+              <button
+                class="btn p-0 text-black"
+                style="font-size: 2rem; line-height: 2rem;"
+                data-toggle="tooltip"
+                data-placement="bottom"
+                title="Включить"
+                type="submit"
+              >
+                <i class="fas fa-toggle-off"></i>
+              </button>
+            </form>
+          </div>
+
+          {% endif %}
+        </label>
+      </div>
+
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Изменить пароль</h6>
+        </div>
+        <div class="card-body">
+          <form class="user" method="POST" action="/change-user-password/">
+            {% csrf_token %}
+            <div class="form-group row">
+              <div class="col-sm-6 mb-3 mb-sm-0">
+                {{formPass.password}}
+              </div>
+              <div class="col-sm-6">
+                {{formPass.new_password}}
+              </div>
+            </div>
+            <div class="offset-sm-4 col-sm-4 mt-4">
+              <input
+                type="submit"
+                name="change_password_button"
+                value="Изменить"
+                class="btn btn-primary btn-user btn-block"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /.container-fluid -->
+
+{% endblock %}

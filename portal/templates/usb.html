@@ -1,0 +1,257 @@
+{% extends 'base.html' %} {% block content %}
+
+<div class="container-fluid" style="min-height: calc(100vh - 170px);">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">USB хранилище</h1>
+  </div>
+
+  <div class="row row-flex">
+    <div class="col-md-8 usb-storage">
+      <div class="row">
+        <div class="col-md-12 storage-frame mb-4">
+          <iframe
+            class="usb-storage-frame"
+            src="https://{{router.url}}:8080/"
+            frameborder="0"
+          ></iframe>
+        </div>
+        <div class="col-md-12">
+          <div class="card shadow mb-4">
+            <!-- Card Header - Accordion -->
+            <a
+              href="#collapseCachedFiles"
+              class="d-block card-header py-3"
+              data-toggle="collapse"
+              role="button"
+              aria-expanded="true"
+              aria-controls="collapseCachedFiles"
+            >
+              <h6 class="m-0 font-weight-bold text-primary">
+                Сохранено в кэше
+              </h6>
+            </a>
+            <!-- Card Content - Collapse -->
+            <div class="collapse" id="collapseCachedFiles">
+              <div class="card-body">
+                <ul class="cache-items list-unstyled">
+                  {% for cached_file in cached_files %}
+                  <li class="cache-item mb-3">
+                    <div
+                      class="cache-item-block d-flex flex-wrap justify-content-between"
+                    >
+                      <span
+                        class="cache-filename mb-2 mb-md-0"
+                        style="min-width: 50%;"
+                      >
+                        <b
+                          ><i
+                            class="far fa-file mr-2"
+                            style="font-size:1.4rem;"
+                          ></i
+                          >{{cached_file.filename}}</b
+                        >
+                      </span>
+                      <a href="{{cached_file.url}}">Источник</a>
+                    </div>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 usb_form">
+      <div class="usb-info text-center">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Память USB</h6>
+          </div>
+          <div class="card-body">
+            <p><b>Всего памяти</b>: <span id="all_memory"></span></p>
+            <p><b>Доступно памяти</b>: <span id="available_memory"></span></p>
+            <div class="progress mb-4">
+              <div
+                class="progress-bar"
+                id="avaliable_usb_memory_progressbar"
+                style="background-color: #1cc88a;"
+                role="progressbar"
+                aria-valuenow=""
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+
+            <script>
+              let all_memory = "{{usb_info.all_memory}}";
+              let available_memory = "{{usb_info.available_memory}}";
+              document.getElementById("all_memory").innerHTML = all_memory;
+              document.getElementById(
+                "available_memory"
+              ).innerHTML = available_memory;
+              all_memory = all_memory.split("G")[0];
+              available_memory = available_memory.split("G")[0];
+              let avaliable_percent =
+                100 - (+available_memory / +all_memory) * 100;
+              document
+                .getElementById("avaliable_usb_memory_progressbar")
+                .setAttribute("aria-valuenow", avaliable_percent);
+              document.getElementById(
+                "avaliable_usb_memory_progressbar"
+              ).style.width = avaliable_percent + "%";
+            </script>
+          </div>
+        </div>
+
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Загрузить файл</h6>
+          </div>
+          <div class="card-body">
+            <form
+              class="user"
+              action="/router/{{router.id}}/usb/"
+              enctype="multipart/form-data"
+              method="post"
+            >
+              {% csrf_token %}
+              <div class="form-group row">
+                <div class="col-sm-12 custom-file">
+                  {{FormFile.file}} {{FormFile.filename}}
+                  <label
+                    class="custom-file-label text-left"
+                    for="user_custom_photo"
+                    >Выбрать файл</label
+                  >
+
+                  <script>
+                    let file_input = document.querySelector(
+                      ".custom-file-input"
+                    );
+                    file_input.addEventListener("change", () => {
+                      let filename = file_input.value;
+                      filename = filename.replace("C:\\fakepath\\", "");
+                      let file_label = document.querySelector(
+                        ".custom-file-label"
+                      );
+                      file_label.innerHTML = filename;
+                      let usb_filename_field = document.querySelector(
+                        ".filename_usb"
+                      );
+                      usb_filename_field.value = filename;
+                    });
+                  </script>
+                </div>
+                <div class="col-sm-12 custom-file-submit mt-4">
+                  <input
+                    type="submit"
+                    name="change_photo_button"
+                    value="Отправить"
+                    class="btn btn-primary btn-user btn-block"
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Создать кэш</h6>
+          </div>
+          <div class="card-body cache-file-card">
+            <form
+              class="user send-cached-file-form"
+              action="/upload_file_cache/{{router.id}}/"
+              enctype="multipart/form-data"
+              method="post"
+            >
+              {% csrf_token %}
+              <div class="form-group row">
+                <div class="col-sm-12 custom-file">
+                  <input
+                    type="url"
+                    name="cache_url"
+                    class="form-control form-control-user cache-filename-input p-3 mb-3"
+                    placeholder="Введите ссылку на источник"
+                    required
+                  />
+                  <!-- pattern="http://*" -->
+                  <input
+                    type="hidden"
+                    name="cache_filename"
+                    class="cache_filename_usb"
+                  />
+                  <input
+                    type="file"
+                    name="cache_file"
+                    class="custom-file-input cache-input"
+                    required
+                  />
+                  <label
+                    class="custom-file-label cache-file-label text-left"
+                    for="user_custom_photo"
+                    >Выбрать файл</label
+                  >
+                </div>
+                <div class="col-sm-12 custom-file-submit send-cache-file mt-4">
+                  <input
+                    type="button"
+                    value="Отправить"
+                    class="btn btn-primary btn-user btn-block"
+                  />
+                </div>
+
+                <script>
+                  let cache_input = document.querySelector(".cache-input");
+                  cache_input.addEventListener("change", () => {
+                    let cache_filename = cache_input.value;
+                    cache_filename = cache_filename.replace(
+                      "C:\\fakepath\\",
+                      ""
+                    );
+                    let cache_file_label = document.querySelector(
+                      ".cache-file-label"
+                    );
+                    cache_file_label.innerHTML = cache_filename;
+                    let usb_cache_filename_field = document.querySelector(
+                      ".cache_filename_usb"
+                    );
+                    usb_cache_filename_field.value = cache_filename;
+                  });
+
+                  let cache_filename_input = document.querySelector(
+                    ".cache-filename-input"
+                  );
+
+                  var change_input_value = function () {
+                    cache_filename_input.value = "https://";
+                    cache_filename_input.removeEventListener("click", change_input_value, false);
+                  };
+
+                  cache_filename_input.addEventListener("click", change_input_value);
+                  let send_cached_file_form = document.querySelector(".send-cached-file-form");
+
+                  let send_cache_file = document.querySelector(".send-cache-file").addEventListener("click", event => {
+                    // event.preventDefault();
+                    send_cached_file_form.submit();
+                    let card = document.querySelector(".cache-file-card").innerHTML = `
+                    <div class="d-flex flex-wrap justify-content-center align-items-center flex-column">
+                    <b class="d-block text-center mb-2" > <small> Подождите, файл загружается! По окончании загрузки страница будет перезагружена автоматически!</small> </b>
+                    <img src="https://www.ternex.ru/static/portal/img/loading-spinner.gif" alt="loading">
+                    </div>
+                    `;
+                  });
+                </script>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends 'base.html' %} {% block content %}
+
+<div class="container-fluid" style="min-height: calc(100vh - 170px);">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Центр приложений</h1>
+    <button
+      id="add_new_app"
+      class="btn bg-success text-white"
+      data-toggle="modal"
+      data-target="#newAppModal"
+      type="button"
+    >
+      <i class="fas fa-plus"></i>
+    </button>
+  </div>
+
+  <!-- Add App Modal-->
+  <div class="modal fade" id="newAppModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Добавление приложения
+          </h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close"></button>
+          <span aria-hidden="true">×</span>
+        </div>
+
+        <div class="modal-body">
+          <form action="/add-application/" method="POST" class="mb-3" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group row p-3 m-0">
+              <h3 class="h4 mb-3 text-gray-800">Введите название приложения</h3>
+              <input
+                type="text"
+                class="form-control form-control-user p-3 mb-3"
+                name="name"
+                placeholder="Название приложения"
+                required
+              />
+            </div>
+            <div class="form-group row p-3 m-0">
+              <h3 class="h4 mb-3 text-gray-800">Введите описание приложения</h3>
+              <input
+                type="text"
+                class="form-control form-control-user p-3 mb-3"
+                name="short_description"
+                placeholder="Краткое описание"
+                required
+              />
+              <input
+                type="text"
+                class="form-control form-control-user p-3 mb-3"
+                name="full_description"
+                placeholder="Полное описание"
+                required
+              />
+            </div>
+            <div class="form-group row p-3 m-0">
+              <h3 class="h4 mb-3 text-gray-800">Выберите логотип приложения</h3>
+              <div class="custom-file my-3">
+                <label class="custom-file-label w-100 p-2" for="logo">
+                  <span class="filename-label">Логотип приложения</span>
+                  <input type="file" class="custom-file-input" name="logo" id="logo" accept="image/*" required />
+                </label>
+              </div>
+            </div>
+            <div class="form-group row p-3 m-0">
+              <h3 class="h4 mb-3 text-gray-800">Выберите скриншоты приложения</h3>
+              <div class="custom-file my-3">
+                <label class="custom-file-label w-100 p-2" for="screnshot1">
+                  <span class="filename-label">Выбрать скриншот</span>
+                  <input
+                    type="file"
+                    class="custom-file-input"
+                    name="screenshot1"
+                    id="screnshot1"
+                    accept="image/*"
+                    required
+                  />
+                </label>
+              </div>
+              <div class="custom-file my-3">
+                <label class="custom-file-label w-100 p-2" for="screnshot2">
+                  <span class="filename-label">Выбрать скриншот</span>
+                  <input
+                    type="file"
+                    class="custom-file-input"
+                    name="screenshot2"
+                    id="screnshot2"
+                    accept="image/*"
+                    required
+                  />
+                </label>
+              </div>
+              <div class="custom-file my-3">
+                <label class="custom-file-label w-100 p-2" for="screnshot3">
+                  <span class="filename-label">Выбрать скриншот</span>
+                  <input
+                    type="file"
+                    class="custom-file-input"
+                    name="screenshot3"
+                    id="screnshot3"
+                    accept="image/*"
+                    required
+                  />
+                </label>
+              </div>
+            </div>
+            <div class="form-group row p-3 m-0">
+              <h3 class="h4 mb-3 text-gray-800">Выберите файлы приложения</h3>
+              <div class="custom-file my-3">
+                <label class="custom-file-label w-100 p-2" for="script">
+                  <span class="filename-label">Выбрать Shell скрипт</span>
+                  <input type="file" class="custom-file-input" name="script" id="script" required />
+                </label>
+              </div>
+              <div class="custom-file my-3">
+                <label class="custom-file-label w-100 p-2" for="app">
+                  <span class="filename-label">Выбрать архив приложения</span>
+                  <input type="file" class="custom-file-input" name="app" id="app" required />
+                </label>
+              </div>
+              <input
+                type="submit"
+                value="Отправить"
+                class="btn btn-primary btn-user btn-block new-app-button mt-5"
+                id="app-btn-4"
+              />
+            </div>
+          </form>
+
+          <style>
+            .custom-file-label {
+              position: relative;
+            }
+            .custom-file-label::after {
+              height: auto;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+          </style>
+
+          <script>
+            const file_inputs = document.querySelectorAll(".custom-file-input");
+            file_inputs.forEach(input => {
+              input.addEventListener("change", () => {
+                let filename = input.value;
+                filename = filename.replace("C:\\fakepath\\", "");
+                const file_label = (input.parentNode.querySelector(".filename-label").innerHTML = filename);
+              });
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row row-flex">
+    {% for app in apps %}
+
+    <div class="col-md-3 col-sm-6 col-6 app">
+      <a class="app-link" href="/app/{{app.id}}/">
+        <div class="card app-card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{{app.name}}</h6>
+          </div>
+          <div class="card-body app-card-body">
+            <div class="app-image mb-3">
+              <img src="{{app.logo.url | safe}}" alt="Изображение приложения" />
+            </div>
+            <div class="app-description">
+              <h6 class="h6 text-gray-700">Описание:</h6>
+              <p class="text-gray-700">{{app.short_description}}</p>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

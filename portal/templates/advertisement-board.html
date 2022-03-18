@@ -1,0 +1,176 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container-fluid" style="min-height: calc(100vh - 170px);">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Доска объявлений</h1>
+  </div>
+
+  <div class="row row-flex">
+    <div class="col-md-12 advertisement-create mb-5 text-right">
+      <a href="/advertisement-create/">
+        <button
+          class="btn btn-primary"
+          data-toggle="tooltip"
+          data-placement="bottom"
+          title="Перейти к созданию нового объявления"
+          id="CreateNewAdvertisement"
+        >
+          Создать объявление
+        </button>
+      </a>
+    </div>
+
+    <div class="col-md-12 advertisements-list mb-3">
+      <div class="advertisements-list-header text-center">
+        <h3 class="h4 mb-4 text-gray-700">Созданные объявления</h3>
+        {% for advertisement in advertisements %}
+        <div class="offset-sm-2 col-sm-8 card shadow mb-3 px-0">
+          <a
+            href="#advertisiment-{{advertisement.id}}-card"
+            class="d-block card-header py-3 bg-white"
+            data-toggle="collapse"
+            role="button"
+            aria-expanded="true"
+            aria-controls="advertisiment-{{advertisement.id}}-card"
+          >
+            <h6 class="m-0 font-weight-bold text-primary text-left pl-3">
+              {{advertisement.header}}
+            </h6>
+          </a>
+          <div
+            class="collapse show"
+            id="advertisiment-{{advertisement.id}}-card"
+          >
+            <div class="card-body">
+              <div
+                class="advertisiment-buttons d-flex justify-content-end align-items-center flex-wrap"
+              >
+                <div class="advertisement-button-open mr-auto">
+                  <a
+                    href="/advertisement/{{advertisement.id}}/"
+                    class="not-underlined"
+                  >
+                    <button
+                      class="not-underlined btn btn-primary btn-icon-split mb-3 mb-md-0"
+                      type="button"
+                    >
+                      <span class="icon text-white-50">
+                        <i class="fas fa-arrow-right"></i>
+                      </span>
+                      <span class="text">Просмотреть</span>
+                    </button>
+                  </a>
+                </div>
+
+                <div class="advertisement-counters mr-3 d-flex flex-row">
+                  <div class="mr-2"
+                  data-toggle="tooltip"
+                  data-placement="bottom"
+                  title="Количество просмотров">
+                  {{advertisement.count_views}} <i class="ml-1 fas fa-eye"></i>
+                  </div>
+
+                  <div data-toggle="tooltip"
+                  data-placement="bottom"
+                  title="Количество переходов по ссылкам">
+                  {{advertisement.count_transition}} <i class="ml-1 fas fa-external-link-alt"></i>
+                  </div>
+                </div>
+
+                {% if advertisement.activity %}
+                <!-- /.advertisement-button-activate-toggler active start -->
+                <div class="advertisement-button-activate-toggler mr-2">
+                  <form method="POST" action="/advertisement-board/">
+                    {% csrf_token %}
+                    <input
+                      type="hidden"
+                      value="{{advertisement.id}}"
+                      name="advertisement_id"
+                    />
+                    <input
+                      type="hidden"
+                      value="False"
+                      name="advertisement_activity"
+                    />
+                    <button
+                      class="btn p-0 text-success"
+                      style="font-size: 2rem; line-height: 2rem;"
+                      data-toggle="tooltip"
+                      data-placement="bottom"
+                      title="Деактивировать объявление"
+                      type="submit"
+                    >
+                      <i class="fas fa-toggle-on"></i>
+                    </button>
+                  </form>
+                </div>
+                <!-- /.advertisement-button-activate-toggler active end -->
+                {% else %}
+                <!-- /.advertisement-button-activate-toggler not active start -->
+                <div class="advertisement-button-activate-toggler mr-4">
+                  <form method="POST" action="/advertisement-board/">
+                    {% csrf_token %}
+                    <input
+                      type="hidden"
+                      value="{{advertisement.id}}"
+                      name="advertisement_id"
+                    />
+                    <input
+                      type="hidden"
+                      value="True"
+                      name="advertisement_activity"
+                    />
+                    <button
+                      class="btn p-0 text-black"
+                      style="font-size: 2rem; line-height: 2rem;"
+                      data-toggle="tooltip"
+                      data-placement="bottom"
+                      title="Активировать объявление"
+                      type="submit"
+                    >
+                      <i class="fas fa-toggle-off"></i>
+                    </button>
+                  </form>
+                </div>
+                <!-- /.advertisement-button-activate-toggler not active end -->
+                {% endif %}
+
+                <!-- /.advertisement-button-delete start -->
+                <div class="advertisement-button-delete">
+                  <form method="POST" action="/advertisement-board/">
+                    {% csrf_token %}
+                    <input
+                      type="hidden"
+                      value="{{advertisement.id}}"
+                      name="advertisement_delete_id"
+                    />
+                    <button
+                      class="btn text-danger"
+                      data-toggle="tooltip"
+                      data-placement="bottom"
+                      title="Удалить объявление"
+                      type="submit"
+                    >
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </form>
+                </div>
+                <!-- /.advertisement-button-delete end -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+          document.addEventListener("DOMContentLoaded", function() {
+            let id = "{{advertisement.id}}";
+            $(`#advertisiment-${id}-card`).collapse("hide");
+          });
+        </script>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

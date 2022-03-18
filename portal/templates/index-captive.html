@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Авторизация</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png" />
+
+    <link rel="stylesheet" href="/static/portal/css/bootstrap-reboot.min.css" />
+    <link rel="stylesheet" href="/static/portal/css/style.css" />
+  </head>
+
+  <body>
+    <div class="overlay"></div>
+    <div class="wrapper">
+      <div class="content">
+        <div class="form">
+          <h1>Авторизация</h1>
+          <form method="post">
+            {% csrf_token %}
+            {{ form.email }}
+            {{ form.password }}
+            <input type="submit" value="Войти" />
+            {% if form.errors or context %}
+            <p class="mt-2">
+              <small
+                >Логин или пароль введены неверно. Повторите попытку!</small
+              >
+            </p>
+            {% endif %}
+          </form>
+          <hr>
+          <small><a href="/register">Создать аккаунт!</a></small>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

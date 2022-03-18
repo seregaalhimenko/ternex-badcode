@@ -1,0 +1,60 @@
+{% extends 'base.html' %} {% block content %}
+<script src="../../static/portal/js/nicEdit.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+  bkLib.onDomLoaded(nicEditors.allTextAreas);
+</script>
+
+<div class="container-fluid" style="min-height: calc(100vh - 170px);">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Создать объявление</h1>
+  </div>
+
+  <div class="row row-flex">
+    <div class="offset-sm-1 col-sm-10 offset-md-2 col-md-8 advertisements-create mb-3">
+      <form id="editor-form" method="POST" action="/advertisement-create/">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="form-group">
+              <label for="advertisement_header">Заголовок объявления</label>
+              <input
+                class="form-control"
+                name="advertisement_header"
+                type="text"
+                placeholder="Введите заголовок..."
+              />
+            </div>
+          </div>
+        </div>
+        <div class="row form-group">
+          <div class="col-sm-12">
+            <label for="advertisement_message">Текст объявления:</label>
+            <textarea name="advertisement_message" id="advertisement_message" width="100%" style="min-height: 40vh;">
+            </textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12 text-right mt-3">
+            <button class="btn btn-primary" type="submit">
+              Создать
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <!--======= Editor fix =======-->
+  <script>
+    $(document).ready(function() {
+      $('.nicEdit-panelContain').parent().width('100%');
+      $('.nicEdit-panelContain').parent().next().width('100%');
+      $('.nicEdit-main').width('100%');
+      $('.nicEdit-main').css("margin","0px");
+    });
+  </script>
+
+{% endblock %}

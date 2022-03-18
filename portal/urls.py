@@ -1,0 +1,78 @@
+import os
+from .views import *
+from django.urls import path
+from django.contrib.auth.views import LogoutView
+from django.contrib.auth import views as auth_views
+from django.conf import settings
+
+urlpatterns = [
+    path("sms_check/", sms_check, name="sms_check"),
+    path("register/", register, name="register"),
+    path("register-user/", register_user, name="register-user"),
+    path("login/", user_login, name="login"),
+    path("portal/", portal_index, name="portal"),
+    path("logout/", LogoutView.as_view(), {"next_page": settings.LOGOUT_REDIRECT_URL}, name="logout"),
+    path("add-new-router/", add_new_router, name="add-new-router"),
+    path("ad/", show_advertising),
+    path("login-wifi-users/", login_wifi_users),
+    path("router-status/", router_status),
+    path("user-profile/", user_profile),
+    path("change-user-data/", change_user_data),
+    path("change-user-password/", change_user_password),
+    path("change-user-image/", change_user_image),
+    path("notifications/", notifications),
+    path("delete-router/", delete_router),
+    path("advertisement-board/", advertisement_board),
+    path("advertisement/<int:id_advertisement>/", advertisement_view),
+    path("advertisement-create/", advertisement_create),
+    path(
+        "password-reset/",
+        auth_views.PasswordResetView.as_view(template_name="forgot-password.html"),
+        name="password_reset",
+    ),
+    path(
+        "password-reset/done/",
+        auth_views.PasswordResetDoneView.as_view(template_name="password_reset_done.html"),
+        name="password_reset_done",
+    ),
+    path(
+        "password-reset-confirm/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(template_name="password_reset_confirm.html"),
+        name="password_reset_confirm",
+    ),
+    path(
+        "password-reset-complete/",
+        auth_views.PasswordResetCompleteView.as_view(template_name="password_reset_complete.html"),
+        name="password_reset_complete",
+    ),
+    path("router/<int:id_router>/settings/", router_settings, name="router_settings"),
+    path("router/<int:id_router>/settings/change-wifi-channel", change_wifi_channel),
+    path("router/<int:id_router>/settings/add-wifi-network", add_wifi_network),
+    path("router/<int:id_router>/settings/edit-wifi-network", edit_wifi_network),
+    path("router/<int:id_router>/settings/delete-wifi-network", delete_wifi_network),
+    path("notification/<int:id_notification>/", notification_view),
+    path("delete_notification/", delete_notification),
+    path("redirect/", Redirect),
+    path("notification_count/", notification_count),
+    path("applications/", applications),
+    path("add-application/", add_application),
+    path("app/<int:id_app>/", single_application),
+    path("app/<int:id_app>/install-application/", install_application),
+    path("app/delete-application/", delete_application),
+    path("router/<int:id_router>/usb/", usb, name="usb"),
+    path("UpdateSingleUser/", UpdateSingleUser),
+    path("change_notification_status/", change_notification_status),
+    path("change_sending_data_status/", change_sending_data_status),
+    path("change_mailing_status/", change_mailing_status),
+    path("cleanNotifications/", cleanNotifications),
+    path("get-cache-location/", api_get_cache_location),
+    path("upload_file_cache/<int:router_id>/", upload_file_cache),
+    path("userTrecking/", write_user_tracking_into_log),
+    path("test22/", test),
+    path("payment-expired/", payment_expired),
+    path("payment-success/", payment_success),
+    path("payment/", payment),
+    path("payment-get-data/", payment_out),
+    path("{}/".format(os.getenv("RESULTURL")), payment_result),  # result
+    path("map", show_map),
+]

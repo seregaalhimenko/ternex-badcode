@@ -1,0 +1,951 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Leaflet map -->
+<link rel="stylesheet" href="/static/landing/css/leaflet.min.css">
+<script src="/static/landing/js/leaflet.min.js"></script>
+
+<script>
+  // {% if is_adding_router %}
+  window.onload = function () {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(geolocationSuccess, geolocationFailure);
+    }
+    else {
+      $("#getLocation").modal('show');
+    }
+  };
+
+  function geolocationSuccess(position) {
+    $("#setOnMap").modal('show');
+    showMap(position.coords.latitude, position.coords.longitude);
+  }
+
+  function geolocationFailure(positionError) {
+    $("#getLocation").modal('show');
+  };
+
+// {% endif %}
+</script>
+
+<!-- Begin Page Content -->
+<div class="container-fluid">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    <div style="display: inline-flex;">
+      <form action="/UpdateSingleUser/" method="POST">
+        {% csrf_token %}
+          <button
+            class="btn btn-warning"
+            data-toggle="tooltip"
+            data-placement="right"
+            title="Обновить данные"
+            type="submit"
+          >
+            <i class="fas fa-sync-alt"></i>
+          </button>
+      </form>
+      <form action="/userTrecking/" method="POST" class="ml-2">
+        {% csrf_token %}
+          <button
+            class="btn btn-info"
+            data-toggle="tooltip"
+            data-placement="right"
+            title="Лог"
+            type="submit"
+          >
+          <i class="fa fa-download" aria-hidden="true"></i>
+          </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row row-flex">
+    {% for router in routers %}
+
+    <!-- Delete Router Modal-->
+    <div class="modal fade" id="deleteRouter{{router.id}}Modal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Удаление роутера
+            </h5>
+            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <h5 class=" text-center text-gray-900 mb-3 p-3">
+              Подтвердите действие
+            </h5>
+            <p>Удаление роутера приведет к потере статистики и других данных об этом роутере. Вы действительно хотите
+              удалить роутер с портала Ternex?</p>
+          </div>
+          <div class="modal-footer">
+            <form action="/delete-router/" method="POST">
+              {% csrf_token %}
+              <input type="hidden" value="{{router.id}}" name="id">
+              <button id="router_{{router.id}}_delete" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom"
+                title="Удалить роутер" type="submit">
+                Удалить
+              </button>
+            </form>
+            <button class="btn btn-secondary" type="button" data-dismiss="modal">
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        let memory = "{{ router.memory | safe }}";
+        memory = Math.trunc(memory / 1000, 10);
+        let router_memory_span = document.querySelectorAll("span.router-memory");
+        router_memory_span.forEach(e =>{
+          e.innerHTML = memory.toString();
+        });
+      });
+    </script>
+    
+    {% if router.activity %}
+    <!-- ROUTER -->
+    <div class="router-card col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-4 order-first">
+      <div class="card shadow h-100">
+        <!-- Card Header -->
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <span><i class="fas fa-circle mr-2" style="color:#1cc88a;"></i></span>
+            <div class="router-{{ router.id }}-name router-name">
+              {{ router.name }}
+              <button id="rename-{{ router.id }}-button"
+                class="router-rename-button btn btn-sm rounded-circle btn-link text-secondary" data-toggle="tooltip"
+                data-placement="right" title="Переименовать">
+                <i class="fas fa-pen"></i>
+              </button>
+            </div>
+            <script>
+              $("#rename-{{router.id}}-button").on(
+                "click",
+                function () {
+                  $(".router-{{router.id}}-name").css(
+                    "display",
+                    "none"
+                  );
+                  $(".router-{{router.id}}-buttons").css(
+                    "display",
+                    "none"
+                  );
+                  $(".router-{{router.id}}-rename-form").css(
+                    "display",
+                    "inline-flex"
+                  );
+                }
+              );
+            </script>
+            <div class="
+            router-{{ router.id }}-rename-form 
+            router-rename-form
+            ">
+              <form class="d-flex" method="POST" action="/portal/">
+                {% csrf_token %}
+                <input type="text" id="new-router-{{ router.id }}-name" class="router-rename-input bg-light small"
+                  value="{{ router.name }}" name="new-name" placeholder="Название роутера..." />
+                <input type="hidden" value="{{ router.id }}" name="id" />
+                <input id="submit-rename-{{router.id}}" class="router-rename-submit btn btn-primary" value="Ок"
+                  name="send-new-name" type="submit" />
+              </form>
+            </div>
+          </h6>
+          <div class="router-{{router.id}}-buttons router-buttons">
+
+
+            <!-- ROUTER USB BUTTON -->
+            {% if router.last_statistic.usb_all_memory != "0"  %}
+            <a href="/router/{{router.id}}/usb/" id="router_{{router.id}}_usb"
+              class="btn rounded-circle btn-link mr-1">
+              <i class="fab fa-usb" style="color:#077b00;"></i>
+            </a>
+            {%endif%}
+
+            <!-- ROUTER SETTINGS BUTTON -->
+            <a href="/router/{{router.id}}/settings/" id="router_{{router.id}}_settings"
+              class="btn rounded-circle btn-link text-info mr-1">
+              <i class="fas fa-cog"></i>
+            </a>
+            <!-- ROUTER DELETE BUTTON -->
+            <button id="router_{{router.id}}_delete" class="btn rounded-circle btn-link text-danger" data-toggle="modal"
+              data-target="#deleteRouter{{router.id}}Modal" type="button">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body d-flex justify-content-center align-items-between text-center p-3 bg-gray-100">
+          <div class="row">
+            <div class="col-lg-12 router-image mb-3
+                      {% if router.activity %}
+                      turned-on-router
+                      {% else %}
+                      turned-off-router
+                      {% endif %}
+                      "></div>
+            <div class="col-lg-12 text-left">
+              <div class="router-info dropdown mb-1">
+                <button class="btn rounded-circle text-gray-600 dropdown-toggle ml-2" id="routerInfoDropdown"
+                  role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">
+                  <i class="fas fa-sm mr-2 fa-info-circle"></i>
+                  О роутере
+                </button>
+                <div class="dropdown-menu shadow py-0" aria-labelledby="routerInfoDropdown">
+                  <h6 class="dropdown-header bg-primary text-white p-2 mb-2">
+                    Информация о роутере:
+                  </h6>
+                  <p class="dropdown-item text-left mb-1">
+                    Бренд: {{ router.brand }}
+                  </p>
+                  <p class="dropdown-item text-left mb-1">
+                    Модель: {{ router.model }}
+                  </p>
+                  <p class="dropdown-item text-left mb-1">
+                    Память: <span class="router-memory"></span> Mb
+                  </p>
+                  <p class="dropdown-item text-left mb-1">
+                    ЦПУ: {{ router.cpu }}
+                  </p>
+                  {% if router.host %}
+                  <p class="dropdown-item text-left mb-1">
+                    Хост: <i style="color: #1cc88a" class="ml-3 fas fa-check-circle"></i>
+                  </p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-6">
+                  <p class="text-left ml-3 mb-1">
+                    Онлайн: {{ router.online_days }} дней
+                  </p>
+                  <p class="text-left ml-3 mb-1">
+                    Активность: {{ router.last_statistic.active_users }}
+                    <button href="#" router_id="{{router.id}}" class="router_stat btn rounded-circle btn-link ml-2 px-2"
+                      data-toggle="modal" data-target="#statsRouterModal" title="Статистика">
+                      <i class="fas fa-chart-line"></i>
+                    </button>
+                  </p>
+                </div>
+                <div class="col-6">
+                  <p class="text-left ml-3 mb-1">
+                    Загрузка:
+                    <div class="router-channel pl-2">
+                      <i class="fas fa-long-arrow-alt-up ml-2" style="color:#60be92;"></i>
+                      {{router.last_statistic.upload_speed}}
+                      <br>
+                      <i class="fas fa-long-arrow-alt-down ml-2" style="color:#e74a3b;"></i>
+                      {{router.last_statistic.download_speed}}
+                    </div>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--ROUTER END-->
+    {% else %}
+    <!-- ROUTER -->
+    <div class="router-card col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-4 order-last">
+      <div class="card shadow h-100">
+        <!-- Card Header -->
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <span>
+              <i class="fas fa-circle ml-2 mr-1" style="color:#bdbdbd;"></i>
+            </span>
+            <div class="router-{{ router.id }}-name router-name">
+              {{ router.name }}
+              <button id="rename-{{ router.id }}-button"
+                class="router-rename-button btn btn-sm rounded-circle btn-link text-secondary" data-toggle="tooltip"
+                data-placement="right" title="Переименовать">
+                <i class="fas fa-pen"></i>
+              </button>
+            </div>
+            <script>
+              $("#rename-{{router.id}}-button").on(
+                "click",
+                function () {
+                  $(".router-{{router.id}}-name").css(
+                    "display",
+                    "none"
+                  );
+                  $(".router-{{router.id}}-buttons").css(
+                    "display",
+                    "none"
+                  );
+                  $(".router-{{router.id}}-rename-form").css(
+                    "display",
+                    "inline-flex"
+                  );
+                }
+              );
+            </script>
+            <div class="
+                          router-{{ router.id }}-rename-form 
+                          router-rename-form
+                          ">
+              <form class="d-flex" method="POST" action="/portal/">
+                {% csrf_token %}
+                <input type="text" id="new-router-{{ router.id }}-name" class="router-rename-input bg-light small"
+                  value="{{ router.name }}" name="new-name" placeholder="Название роутера..." />
+                <input type="hidden" value="{{ router.id }}" name="id" />
+                <input id="submit-rename-{{router.id}}" class="router-rename-submit btn btn-primary" value="Ок"
+                  name="send-new-name" type="submit" />
+              </form>
+            </div>
+          </h6>
+          <div class="router-{{router.id}}-buttons router-buttons">
+            <button id="router_{{router.id}}_delete" class="btn rounded-circle btn-link text-danger" data-toggle="modal"
+              data-target="#deleteRouter{{router.id}}Modal" type="button">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body d-flex justify-content-center align-items-between text-center p-3 bg-gray-100">
+          <div class="row">
+            <div class="col-lg-12 router-image mb-3
+                      {% if router.activity %}
+                      turned-on-router
+                      {% else %}
+                      turned-off-router
+                      {% endif %}
+                      "></div>
+            <div class="col-lg-12 mb-3 text-left">
+              <div class="router-info dropdown mb-1">
+                <button class="btn rounded-circle text-gray-600 dropdown-toggle ml-2" id="routerInfoDropdown"
+                  role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#">
+                  <i class="fas fa-sm mr-2 fa-info-circle"></i>
+                  О роутере
+                </button>
+                <div class="dropdown-menu shadow py-0" aria-labelledby="routerInfoDropdown">
+                  <h6 class="dropdown-header bg-primary text-white p-2 mb-2">
+                    Информация о роутере:
+                  </h6>
+                  <p class="dropdown-item text-left mb-1">
+                    Бренд: {{ router.brand }}
+                  </p>
+                  <p class="dropdown-item text-left mb-1">
+                    Модель: {{ router.model }}
+                  </p>
+                  <p class="dropdown-item text-left mb-1">
+                    Память: <span class="router-memory"></span> Mb
+                  </p>
+                  <p class="dropdown-item text-left mb-1">
+                    ЦПУ: {{ router.cpu }}
+                  </p>
+                </div>
+              </div>
+              <p class="text-left ml-3 mb-1">
+                Оффлайн
+              </p>
+              <p class="text-left ml-3 mb-1">
+                Пользователей: 0
+                <button href="#" router_id="{{router.id}}" class="router_stat btn rounded-circle btn-link ml-2 px-2"
+                  data-toggle="modal" data-target="#statsRouterModal" title="Статистика">
+                  <i class="fas fa-chart-line"></i>
+                </button>
+              </p>
+              <p class="text-left ml-3 mb-1">
+                Загрузка: оффлайн
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--ROUTER END-->
+    {% endif %}
+
+    {% endfor %}
+
+    <!-- ADD ROUTER -->
+    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-4 pb-4 order-last">
+      <button class="btn p-0 h-100 w-100" data-toggle="modal" data-target="#addRouterModal">
+        <div class="card shadow h-100">
+          <div class="card-header py-3 text-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+              Добавить роутер
+            </h6>
+          </div>
+          <div class="card-body p-5 d-flex text-center bg-gray-100">
+            <div class="add-router-image h-100"></div>
+          </div>
+        </div>
+      </button>
+    </div>
+    <!-- ADD ROUTER END -->
+  </div>
+</div>
+<!-- /.container-fluid -->
+</div>
+<!-- End of Main Content -->
+
+
+<!-- Add Router Modal-->
+<div class="modal fade" id="addRouterModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Добавить роутер
+        </h5>
+        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+      </div>
+      <div class="modal-body">
+        <h5 class=" text-center text-gray-900 mb-3 p-3">
+          Добавление роутера на портал ТERNEX происходить автоматически.
+        </h5>
+        <ul class="text-gray-800">
+          <li>
+            <p class="mb-1">
+              Возмите роутер с предустановленым программным обеспечением от
+              компании TERNEX.
+            </p>
+          </li>
+          <li>
+            <p class="mb-1">
+              Подключите его к питанию и подключитесь к сети.
+            </p>
+          </li>
+          <li>
+            <p class="mb-1">
+              Следуя инструкциям, подключите роутер к сети интернет.
+            </p>
+          </li>
+          <li>
+            <p class="mb-1">
+              При подключении к интернету роутер автоматически выдаст запрос
+              на присоединение к порталу.
+            </p>
+          </li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">
+          Закрыть
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Stats Router Modal-->
+<div class="modal fade" id="statsRouterModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Статистика роутера
+        </h5>
+        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="card shadow mt-3 mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+              Текущая статистика канала роутера.
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="chart-area d-flex justify-content-center align-items-center">
+              {% for router in routers %}
+              <canvas id="router_{{router.id}}_channel_chart" style="display: none;"></canvas>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="card shadow mt-3 mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+              Текущая статистика пользователей роутера.
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="chart-area d-flex justify-content-center align-items-center">
+              {% for router in routers %}
+              <canvas id="router_{{router.id}}_users_chart" style="display: none;"></canvas>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+              Использование памяти.
+            </h6>
+          </div>
+          <div class="card-body p-5">
+            <div class="chart-bar d-flex justify-content-center align-items-center">
+              {% for router in routers %}
+              <canvas id="router_{{router.id}}_memory_chart" style="display: none;"></canvas>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">
+          Закрыть
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Get Location Modal-->
+<div class="modal fade" id="getLocation" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Определение геолокации
+        </h5>
+        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h5 class=" text-center text-gray-900 mb-3 p-3">
+          Вы добавляете новый роутер на портал,
+          укажите Ваш адрес для определения геолокации нового роутера.
+        </h5>
+        <form class="user p-3">
+          <div class="form-group row">
+            <div class="col-sm-12">
+              <input class="form-control form-control-user p-4 mb-3" type="text" id="city" placeholder="Город" required>
+            </div>
+            <div class="col-sm-6">
+              <input class="form-control form-control-user p-4 mb-3" type="text" id="street" placeholder="Улица"
+                required>
+            </div>
+            <div class="col-sm-6">
+              <input class="form-control form-control-user p-4 mb-3" type="text" id="house" placeholder="Дом" required>
+            </div>
+          </div>
+          <div class="offset-sm-2 col-sm-8 d-flex justify-content-center align-items-center">
+            <input class="btn btn-primary btn-user btn-block p-2 mb-4" id="send_adr" style="width: 70%;" type="button"
+              value="Отправить">
+          </div>
+        </form>
+
+        <script>
+          let btn = $('#send_adr');
+          btn.on('click', function getPosition() {
+            $("#getLocation").modal('hide');
+            let city = $('#city').val();
+            let street = $('#street').val();
+            let house = $('#house').val();
+            $.get(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${city},${street},${house}`,
+              function (data) {
+                $("#setOnMap").modal('show');
+                showMap(data[0].lat, data[0].lon);
+                setTimeout(function () { map.invalidateSize() }, 400);
+              })
+          });
+        </script>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Set On Map Modal-->
+<div class="modal fade" id="setOnMap" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Уточните ваше местоположение.
+        </h5>
+        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h5 class=" text-center text-gray-900 mb-3 p-3">
+          Вы можете уточнить местоположение вашего роутера для более удобной работы с точками.
+        </h5>
+        <div class="row">
+          <div class="col-md-12">
+            <form action="/portal/" method="POST" class="mb-3">
+              {% csrf_token %}
+              <div class="form-group row px-4 mb-3 d-flex justify-content-center align-items-center">
+                <div class="col-md-6">
+                  <input type="text" class="form-control form-control-user p-4 mb-3 mb-sm-0" id="correct-longitude"
+                    name="correct-lon" placeholder="Долгота" readonly>
+                </div>
+                <div class="col-md-6">
+                  <input type="text" class="form-control form-control-user p-4" id="correct-latitude" name="correct-lat"
+                    placeholder="Широта" readonly>
+                </div>
+              </div>
+              <div class="row">
+                <div class="offset-md-3 col-md-6 offset-sm-2 col-sm-8 d-flex justify-content-center align-items-center">
+                  <input type="hidden" name="router_ipv6" value="{{is_adding_ipv6}}">
+                  <input type="submit" class="btn btn-primary btn-user btn-block" style="width: 50%;" value="Сохранить">
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="col-md-12 px-3">
+            <div id="set_router_position_map" style="min-height: 50vh;"></div>
+          </div>
+        </div>
+        <script>
+          function showMap(lat, lon) {
+            let map = L.map("set_router_position_map");
+            map.setView([lat, lon], 17);
+            L.tileLayer(
+              "https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}",
+              {
+                attribution: '',
+                maxZoom: 18,
+                id: "mapbox.streets",
+                accessToken: "pk.eyJ1Ijoic3Bpcml0MDRlayIsImEiOiJjanZwNmtreTcxZHkyNGF2bmpocGlvbzh2In0.Lu2brpXppB3r8HrVUOdt8g"
+              }
+            ).addTo(map);
+
+            var marker = L.marker([lat, lon], { draggable: 'true' }).addTo(map);
+
+            setTimeout(function () { map.invalidateSize() }, 400);
+
+            $('#correct-latitude').val(lat);
+            $('#correct-longitude').val(lon);
+
+            marker.on('dragend', function (e) {
+              let lat = marker.getLatLng().lat;
+              lat.toString();
+              let lng = marker.getLatLng().lng;
+              lng.toString();
+
+              $('#correct-latitude').val(lat);
+              $('#correct-longitude').val(lng);
+            });
+
+          }
+        </script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts JavaScript -->
+<script src="/static/portal/vendor/chart.js/Chart.min.js"></script>
+<script src="/static/portal/js/user_count.js"></script>
+
+
+<script>
+  $(".router_stat").on("click", function () {
+    let id = $(this).attr("router_id");
+    // {% for router in routers %}
+    $("#router_{{router.id}}_channel_chart").hide();
+    $("#router_{{router.id}}_memory_chart").hide();
+    $("#router_{{router.id}}_users_chart").hide();
+    if (id == {{ router.id | safe }}){
+    //start channel
+    var ctx_stats = $("#router_{{router.id}}_channel_chart");
+
+    let statistics_download_time = {{ router.time | safe }};
+    statistics_download_time = statistics_download_time.slice(-20);
+
+    let statistics_download = {{ router.download_speed | safe}};
+
+    statistics_download = statistics_download.slice(-20);
+    ready_stat_download = [];
+    statistics_download.forEach(stat => {
+      stat = stat.split(" ")[0];
+      stat = parseFloat(stat);
+      ready_stat_download.push(stat);
+    });
+
+    let statistics_upload = {{ router.upload_speed | safe}};
+    statistics_upload = statistics_upload.slice(-20);
+    ready_stat_upload = [];
+    statistics_upload.forEach(stat => {
+      stat = stat.split(" ")[0];
+      stat = parseFloat(stat);
+      ready_stat_upload.push(stat);
+    });
+
+    let statistics_acitve_users = {{ router.active_users | safe }};
+    statistics_acitve_users = statistics_acitve_users.slice(-20);
+
+
+
+    var routerUserCount = new Chart(ctx_stats, {
+      type: "line",
+      data: {
+        labels: statistics_download_time,
+        datasets: [
+          {
+            label: "Скачивание:",
+            lineTension: 0.3,
+            backgroundColor: "rgba(78, 115, 223, 0.05)",
+            borderColor: "rgba(78, 115, 223, 1)",
+            pointRadius: 3,
+            pointBackgroundColor: "rgba(78, 115, 223, 1)",
+            pointBorderColor: "rgba(78, 115, 223, 1)",
+            pointHoverRadius: 3,
+            pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+            pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+            pointHitRadius: 10,
+            pointBorderWidth: 2,
+            data: ready_stat_download,
+          },
+          {
+            label: "Загрузка:",
+            lineTension: 0.3,
+            backgroundColor: "rgba(58, 75, 163, 0.05)",
+            borderColor: "rgba(58, 75, 163, 1)",
+            pointRadius: 3,
+            pointBackgroundColor: "rgba(58, 75, 163, 1)",
+            pointBorderColor: "rgba(58, 75, 163, 1)",
+            pointHoverRadius: 3,
+            pointHoverBackgroundColor: "rgba(58, 75, 163, 1)",
+            pointHoverBorderColor: "rgba(58, 75, 163, 1)",
+            pointHitRadius: 10,
+            pointBorderWidth: 2,
+            data: ready_stat_upload,
+          },
+
+        ]
+      },
+
+  options: {
+    maintainAspectRatio: false,
+      layout: {
+      padding: {
+        left: 10,
+          right: 25,
+            top: 25,
+              bottom: 0
+      }
+    },
+    scales: {
+      xAxes: [
+        {
+          time: {
+            unit: "date"
+          },
+          gridLines: {
+            display: false,
+            drawBorder: false
+          },
+          ticks: {
+            maxTicksLimit: 7,
+            beginAtZero: true,
+          }
+        }
+      ],
+        yAxes: [
+          {
+            ticks: {
+              maxTicksLimit: 5,
+              padding: 10,
+              stepSize: 1,
+              beginAtZero: true,
+              callback: function (value, index, values) {
+                return number_format(value);
+              }
+            },
+            gridLines: {
+              color: "rgb(234, 236, 244)",
+              zeroLineColor: "rgb(234, 236, 244)",
+              drawBorder: false,
+              borderDash: [2],
+              zeroLineBorderDash: [2]
+            },
+          }
+        ]
+    },
+    legend: {
+      display: false
+    },
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+        bodyFontColor: "#858796",
+          titleMarginBottom: 10,
+            titleFontColor: "#6e707e",
+              titleFontSize: 14,
+                borderColor: "#dddfeb",
+                  borderWidth: 1,
+                    xPadding: 15,
+                      yPadding: 15,
+                        displayColors: false,
+                          intersect: false,
+                            mode: "index",
+                              caretPadding: 10,
+                                callbacks: {
+        label: function(tooltipItem, chart) {
+          var datasetLabel =
+            chart.datasets[tooltipItem.datasetIndex].label || "";
+          return datasetLabel + " " + number_format(tooltipItem.yLabel) + " kbit/s";
+        }
+      }
+    }
+  }
+  });
+      //end
+    var ctx_users = $("#router_{{router.id}}_users_chart");
+    var routerUserCount = new Chart(ctx_users, {
+      type: "line",
+      data: {
+        labels: statistics_download_time,
+  datasets: [
+    {
+      label: "Пользователей:",
+      lineTension: 0.3,
+      backgroundColor: "rgba(78, 115, 223, 0.05)",
+      borderColor: "rgba(78, 115, 223, 1)",
+      pointRadius: 3,
+      pointBackgroundColor: "rgba(78, 115, 223, 1)",
+      pointBorderColor: "rgba(78, 115, 223, 1)",
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+      pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: statistics_acitve_users, 
+            }
+  ]
+        },
+
+  options: {
+    maintainAspectRatio: false,
+      layout: {
+      padding: {
+        left: 10,
+          right: 25,
+            top: 25,
+              bottom: 0
+      }
+    },
+    scales: {
+      xAxes: [
+        {
+          time: {
+            unit: "date"
+          },
+          gridLines: {
+            display: false,
+            drawBorder: false
+          },
+          ticks: {
+            maxTicksLimit: 7,
+            beginAtZero: true,
+          }
+        }
+      ],
+        yAxes: [
+          {
+            ticks: {
+              maxTicksLimit: 5,
+              padding: 10,
+              stepSize: 1,
+              beginAtZero: true,
+              callback: function (value, index, values) {
+                return number_format(value);
+              }
+            },
+            gridLines: {
+              color: "rgb(234, 236, 244)",
+              zeroLineColor: "rgb(234, 236, 244)",
+              drawBorder: false,
+              borderDash: [2],
+              zeroLineBorderDash: [2]
+            }
+          }
+        ]
+    },
+    legend: {
+      display: false
+    },
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+        bodyFontColor: "#858796",
+          titleMarginBottom: 10,
+            titleFontColor: "#6e707e",
+              titleFontSize: 14,
+                borderColor: "#dddfeb",
+                  borderWidth: 1,
+                    xPadding: 15,
+                      yPadding: 15,
+                        displayColors: false,
+                          intersect: false,
+                            mode: "index",
+                              caretPadding: 10,
+                                callbacks: {
+        label: function(tooltipItem, chart) {
+          var datasetLabel =
+            chart.datasets[tooltipItem.datasetIndex].label || "";
+          return datasetLabel + " " + number_format(tooltipItem.yLabel);
+        }
+      }
+    }
+  }
+  });
+  var ctx_memory = $("#router_{{router.id}}_memory_chart");
+  let memory_used = parseInt("{{ router.last_statistic.memory_used | safe }}");
+  memory_used = Math.trunc(memory_used / 1000, 10);
+  let memory_free = parseInt("{{ router.last_statistic.memory_free | safe }}");
+  memory_free = Math.trunc(memory_free / 1000, 10);
+  var routerMemoryChart = new Chart(ctx_memory, {
+    type: 'pie',
+    data: {
+      labels: ["Памяти использовано", "Памяти свободно"],
+      datasets: [{
+        data: [memory_used, memory_free],
+    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+    hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+    hoverBorderColor: "rgba(234, 236, 244, 1)",
+  }],
+          },
+  tooltips: {
+    backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+        borderColor: '#dddfeb',
+          borderWidth: 1,
+            xPadding: 15,
+              yPadding: 15,
+                displayColors: false,
+                  caretPadding: 10,
+            },
+  legend: {
+    display: false
+  },
+  cutoutPercentage: 80,
+        });
+  $("#router_{{router.id}}_channel_chart").show();
+  $("#router_{{router.id}}_users_chart").show();
+  $("#router_{{router.id}}_memory_chart").show();
+}
+// {% endfor %}
+});
+
+
+
+
+</script>
+
+{% endblock %}

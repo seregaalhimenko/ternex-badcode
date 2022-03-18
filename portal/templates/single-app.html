@@ -1,0 +1,114 @@
+{% extends 'base.html' %} {% block content %}
+
+<link rel="stylesheet" href="../../static/portal/vendor/owl/css/owl.carousel.min.css" />
+<link rel="stylesheet" href="../../static/portal/vendor/owl/css/owl.theme.default.min.css" />
+
+<div class="container-fluid" style="min-height: calc(100vh - 170px);">
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Приложение</h1>
+  </div>
+
+  <div class="row row-flex">
+    <div class="offset-md-2 col-md-8 offset-sm-1 col-sm-10 shadow bg-gray-100 px-4 py-5 mb-4">
+      <div class="row">
+        <div class="col-md-12 app-info mb-3">
+          <div class="row">
+            <div class="col-md-3 app-info-img-cell d-flex justify-content-center align-items-center">
+              <img id="logo" alt="logo" class="img-fluid app-info-img mb-3 mb-md-0" />
+            </div>
+            <div class="col-md-9">
+              <div class="row">
+                <div class="col-md-12 mb-2 mb-md-0">
+                  <h2 class="h4 app-info-name text-gray-900 mb-3">{{app.name}}</h2>
+                </div>
+                <div class="col-md-12">
+                  <p>{{app.short_description}}</p>
+                  <span>Разработчик: {{app.developer}}</span>
+                </div>
+                <div class="col-md-12 app-info-button mt-3 mt-md-0 d-flex justify-content-end">
+                  <button class="btn btn-success" data-toggle="modal" data-target="#setupAppModal">Установить</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Setup App Modal-->
+          <div class="modal fade" id="setupAppModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">
+                    Выберите роутер
+                  </h5>
+                  <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+                <div class="modal-body p-4">
+                  <div class="row">
+                    {% for router in routers %}
+                    <div
+                      class="col-md-4 p-3 shadow d-flex justify-content-center align-items-center text-center flex-column"
+                    >
+                      <h5 class="h4 text-primary mb-2">{{router.name}}</h5>
+                      <img
+                        style="max-height: 130px; width: auto;"
+                        src="../../static/portal/img/router/router.png"
+                        alt="Router {{router.name}}"
+                        class="mb-2"
+                      />
+                      <form action="/app/{{app.id}}/install-application/" method="POST" class="mb-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="router_id" value="{{router.id}}" />
+                        <input type="submit" class="btn btn-primary" value="Выбрать" />
+                      </form>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-12 screenshots mb-3">
+          <h2 class="h4 text-gray-800 mb-3">Скриншоты приложения:</h2>
+          <div class="app-screenshots owl-carousel owl-theme">
+            <div class="item bg-gray-100 d-flex justify-content-center align-items-center">
+              <img id="screenshot1" class="app-screenshot img-fluid" alt="screenshot 1" />
+            </div>
+            <div class="item bg-gray-100 d-flex justify-content-center align-items-center">
+              <img id="screenshot2" class="app-screenshot img-fluid" alt="screenshot 2" />
+            </div>
+            <div class="item bg-gray-100 d-flex justify-content-center align-items-center">
+              <img id="screenshot3" class="app-screenshot img-fluid" alt="screenshot 3" />
+            </div>
+          </div>
+        </div>
+
+        <script>
+          const logo_url = decodeURI("{{app.logo.url | safe}}");
+          document.getElementById("logo").src = logo_url;
+          const screenshot1_url = decodeURI("{{app.screenshots1.url | safe}}");
+          document.getElementById("screenshot1").src = screenshot1_url;
+          const screenshot2_url = decodeURI("{{app.screenshots2.url | safe}}");
+          document.getElementById("screenshot2").src = screenshot2_url;
+          const screenshot3_url = decodeURI("{{app.screenshots3.url | safe}}");
+          document.getElementById("screenshot3").src = screenshot3_url;
+        </script>
+
+        <div class="col-md-12 description">
+          <h2 class="h4 text-gray-800 mb-3">Описание:</h2>
+          <p>
+            {{app.full_description}}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../static/portal/vendor/owl/js/owl.carousel.min.js"></script>
+<script src="../../static/portal/js/owl-config.js"></script>
+{% endblock %}
